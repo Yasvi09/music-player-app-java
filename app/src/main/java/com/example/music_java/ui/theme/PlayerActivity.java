@@ -1,5 +1,6 @@
 package com.example.music_java.ui.theme;
 
+import static com.example.music_java.ui.theme.AlbumDetailsAdapter.albumFiles;
 import static com.example.music_java.ui.theme.MainActivity.musicFiles;
 
 import android.Manifest;
@@ -287,7 +288,13 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void getIntentMethod() {
         position = getIntent().getIntExtra("position", -1);
-        listSongs = musicFiles;
+        String sender=getIntent().getStringExtra("sender");
+        if (sender!=null && sender.equals("albumDetails")){
+            listSongs=albumFiles;
+        }
+        else {
+            listSongs = musicFiles;
+        }
 
         if (listSongs != null && position != -1) {
 
