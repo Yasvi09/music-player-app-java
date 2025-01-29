@@ -1,6 +1,7 @@
 package com.example.music_java.ui.theme;
 
 import static com.example.music_java.ui.theme.AlbumDetailsAdapter.albumFiles;
+import static com.example.music_java.ui.theme.ApplicationClass.ACTION_NEXT;
 import static com.example.music_java.ui.theme.ApplicationClass.ACTION_PLAY;
 import static com.example.music_java.ui.theme.ApplicationClass.ACTION_PREVIOUS;
 import static com.example.music_java.ui.theme.ApplicationClass.CHANNEL_ID_2;
@@ -67,10 +68,12 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         setContentView(R.layout.activity_player);
 
         mediaSessionCompat=new MediaSessionCompat(getBaseContext(),"My Audio");
+        mediaSessionCompat.setActive(true);
         initViews();
         getIntentMethod();
-        song_name.setText(listSongs.get(position).getTitle());
+       /* song_name.setText(listSongs.get(position).getTitle());
         artist_name.setText(listSongs.get(position).getArtist());
+        musicService.OnCompleted();*/
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -155,6 +158,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
                 }
             });
             showNotification(R.drawable.ic_pause);
+            musicService.OnCompleted();
             playPauseBtn.setImageResource(R.drawable.ic_pause);
             musicService.start();
         }
@@ -179,6 +183,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
                 }
             });
             showNotification(R.drawable.ic_play);
+            musicService.OnCompleted();
             playPauseBtn.setImageResource(R.drawable.ic_play);
         }
     }
@@ -222,6 +227,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
                 }
             });
             showNotification(R.drawable.ic_pause);
+            musicService.OnCompleted();
             playPauseBtn.setImageResource(R.drawable.ic_pause);
             musicService.start();
         }
@@ -246,6 +252,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
                 }
             });
             showNotification(R.drawable.ic_play);
+            musicService.OnCompleted();
             playPauseBtn.setImageResource(R.drawable.ic_play);
         }
     }
@@ -360,10 +367,10 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
             Intent intent=new Intent(this,MusicService.class);
             intent.putExtra("servicePosition",position);
             startService(intent);
-            if (musicService != null) {
+            /*if (musicService != null) {
                 seekBar.setMax(musicService.getDuration() / 1000);
             }
-            metaData(uri);
+            metaData(uri);*/
         }
     }
 
@@ -412,6 +419,13 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         MusicService.MyBinder myBinder=(MusicService.MyBinder) service;
         musicService=myBinder.getService();
         Toast.makeText(this,"Connected" + musicService,Toast.LENGTH_SHORT).show();
+        if (musicService != null) {
+            seekBar.setMax(musicService.getDuration() / 1000);
+        }
+        metaData(uri);
+        song_name.setText(listSongs.get(position).getTitle());
+        artist_name.setText(listSongs.get(position).getArtist());
+        musicService.OnCompleted();
     }
 
     @Override
@@ -433,7 +447,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         PendingIntent pausePending=PendingIntent.getBroadcast(this,0,pauseIntent,PendingIntent.FLAG_UPDATE_CURRENT);
 
         Intent nextIntent=new Intent(this, NotificationReceiver.class)
-                .setAction(ACTION_PREVIOUS);
+                .setAction(ACTION_NEXT);
         PendingIntent nextPending=PendingIntent.getBroadcast(this,0,nextIntent,PendingIntent.FLAG_UPDATE_CURRENT);
 
         byte[] picture=null;
@@ -461,6 +475,15 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
 
         NotificationManager notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(0,notification);
+        Log.d("NotificationDebug", "Attempting to show notification");
+        if (notificationManager != null) {
+            try {
+                notificationManager.notify(0, notification);
+                Log.d("NotificationDebug", "Notification sent to system");
+            } catch (Exception e) {
+                Log.e("NotificationDebug", "Error showing notification: " + e.getMessage());
+            }
+        }
     }
 
     private byte[] getAlbumArt(String uri){
