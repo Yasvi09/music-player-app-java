@@ -88,6 +88,25 @@ public class NowPlayingFragmentBottom extends Fragment implements ServiceConnect
             }
         });
 
+        View cardBottomPlayer = view.findViewById(R.id.card_bottom_player);
+        if (cardBottomPlayer != null) {
+            cardBottomPlayer.setOnClickListener(v -> {
+                // Check if music service is ready and we have valid data
+                if (musicService != null && musicService.mediaPlayer != null &&
+                        MainActivity.PATH_TO_FRAG != null && musicService.position >= 0) {
+
+                    Intent intent = new Intent(getContext(), PlayerActivity.class);
+                    intent.putExtra("position", musicService.position);
+                    // Pass the current playback position
+                    intent.putExtra("current_position", musicService.getCurrentPosition());
+                    // If the song is from album details, pass that information
+                    if (AlbumDetailsAdapter.albumFiles != null && !AlbumDetailsAdapter.albumFiles.isEmpty()) {
+                        intent.putExtra("sender", "albumDetails");
+                    }
+                    startActivity(intent);
+                }
+            });
+        }
         return view;
     }
 

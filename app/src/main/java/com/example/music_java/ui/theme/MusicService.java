@@ -49,32 +49,33 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        int myPosition=intent.getIntExtra("servicePosition",-1);
+        int myPosition = intent.getIntExtra("servicePosition", -1);
+        int seekTo = intent.getIntExtra("seekTo", 0);
         String actionName = intent.getStringExtra("ActionName");
-        if(myPosition!=-1){
+
+        if (myPosition != -1) {
             playMedia(myPosition);
+            // Seek to the saved position after creating the media player
+            if (seekTo > 0 && mediaPlayer != null) {
+                mediaPlayer.seekTo(seekTo);
+            }
         }
-        if(actionName !=null){
-            switch (actionName){
-                case "playPause" :
-                    Toast.makeText(this,"PlayPause",Toast.LENGTH_SHORT).show();
+
+        if (actionName != null) {
+            switch (actionName) {
+                case "playPause":
                     playPauseBtnClicked();
                     break;
-
-                case "next" :
-                    Toast.makeText(this,"Next",Toast.LENGTH_SHORT).show();
+                case "next":
                     nextBtnCicked();
                     break;
-
-                case "previous" :
-                    Toast.makeText(this,"Previous",Toast.LENGTH_SHORT).show();
+                case "previous":
                     previousBtnClicked();
                     break;
             }
         }
         return START_STICKY;
     }
-
     private void playMedia(int StartPosition) {
         musicFiles=listSongs;
         position=StartPosition;

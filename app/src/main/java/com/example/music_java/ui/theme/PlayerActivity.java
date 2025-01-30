@@ -5,6 +5,10 @@ import static com.example.music_java.ui.theme.ApplicationClass.ACTION_NEXT;
 import static com.example.music_java.ui.theme.ApplicationClass.ACTION_PLAY;
 import static com.example.music_java.ui.theme.ApplicationClass.ACTION_PREVIOUS;
 import static com.example.music_java.ui.theme.ApplicationClass.CHANNEL_ID_2;
+import static com.example.music_java.ui.theme.MainActivity.ARTIST_NAME;
+import static com.example.music_java.ui.theme.MainActivity.MUSIC_FILE;
+import static com.example.music_java.ui.theme.MainActivity.MUSIC_LAST_PLAYED;
+import static com.example.music_java.ui.theme.MainActivity.SONG_NAME;
 import static com.example.music_java.ui.theme.MainActivity.musicFiles;
 
 import android.Manifest;
@@ -16,6 +20,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -322,33 +327,36 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
 
     private void getIntentMethod() {
         position = getIntent().getIntExtra("position", -1);
-        String sender=getIntent().getStringExtra("sender");
-        if (sender!=null && sender.equals("albumDetails")){
-            listSongs=albumFiles;
-        }
-        else {
+        int currentPosition = getIntent().getIntExtra("current_position", 0);
+        String sender = getIntent().getStringExtra("sender");
+
+        if (sender != null && sender.equals("albumDetails")) {
+            listSongs = albumFiles;
+        } else {
             listSongs = musicFiles;
         }
 
         if (listSongs != null && position != -1) {
+            // Set these values immediately when starting playback
+            MainActivity.SHOW_MINI_PLAYER = true;
+            MainActivity.PATH_TO_FRAG = listSongs.get(position).getPath();
+            MainActivity.ARTIST_TO_FRAG = listSongs.get(position).getArtist();
+            MainActivity.SONG_NAME_TO_FRAG = listSongs.get(position).getTitle();
 
             playPauseBtn.setImageResource(R.drawable.ic_pause);
-            String fullPath = listSongs.get(position).getPath();
-            Log.d("PlayerActivity", "Full Path: " + fullPath);
-            File file = new File(fullPath);
+            uri = Uri.parse(listSongs.get(position).getPath());
 
-            if (!file.exists()) {
-                Toast.makeText(this, "File does not exist: " + fullPath, Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            uri = Uri.fromFile(file);
-
-            showNotification(R.drawable.ic_pause);
-            Intent intent=new Intent(this,MusicService.class);
-            intent.putExtra("servicePosition",position);
+            Intent intent = new Intent(this, MusicService.class);
+            intent.putExtra("servicePosition", position);
+            intent.putExtra("seekTo", currentPosition); // Pass the position to seek to
             startService(intent);
 
+            // Save to SharedPreferences
+            SharedPreferences.Editor editor = getSharedPreferences(MUSIC_LAST_PLAYED, MODE_PRIVATE).edit();
+            editor.putString(MUSIC_FILE, uri.toString());
+            editor.putString(ARTIST_NAME, listSongs.get(position).getArtist());
+            editor.putString(SONG_NAME, listSongs.get(position).getTitle());
+            editor.apply();
         }
     }
 
