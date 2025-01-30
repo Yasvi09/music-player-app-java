@@ -373,6 +373,10 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         repeatBtn = findViewById(R.id.id_repeat);
         playPauseBtn = findViewById(R.id.play_pause);
         seekBar = findViewById(R.id.seekBar);
+
+        backBtn.setOnClickListener(v -> {
+            super.onBackPressed();
+        });
     }
 
     private void metaData(Uri uri) {
