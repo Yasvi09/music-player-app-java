@@ -71,9 +71,6 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         mediaSessionCompat.setActive(true);
         initViews();
         getIntentMethod();
-       /* song_name.setText(listSongs.get(position).getTitle());
-        artist_name.setText(listSongs.get(position).getArtist());
-        musicService.OnCompleted();*/
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -347,30 +344,11 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
 
             uri = Uri.fromFile(file);
 
-            /*try {
-                if (musicService != null) {
-                    musicService.stop();
-                    musicService.release();
-                }
-                musicService.createMediaPlayer(position);
-                if (musicService != null) {
-                    musicService.start();
-                } else {
-                    Log.e("PlayerActivity", "Failed to initialize MediaPlayer");
-                }
-            } catch (Exception e) {
-                Log.e("PlayerActivity", "Error initializing MediaPlayer: " + e.getMessage());
-                Toast.makeText(this, "Error initializing player", Toast.LENGTH_SHORT).show();
-            }*/
-
             showNotification(R.drawable.ic_pause);
             Intent intent=new Intent(this,MusicService.class);
             intent.putExtra("servicePosition",position);
             startService(intent);
-            /*if (musicService != null) {
-                seekBar.setMax(musicService.getDuration() / 1000);
-            }
-            metaData(uri);*/
+
         }
     }
 
@@ -418,6 +396,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
 
         MusicService.MyBinder myBinder=(MusicService.MyBinder) service;
         musicService=myBinder.getService();
+        musicService.setCallBack(this);
         Toast.makeText(this,"Connected" + musicService,Toast.LENGTH_SHORT).show();
         if (musicService != null) {
             seekBar.setMax(musicService.getDuration() / 1000);
@@ -438,18 +417,6 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         Intent intent=new Intent(this, PlayerActivity.class);
         PendingIntent contentIntent=PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_IMMUTABLE);
 
-//        Intent prevIntent=new Intent(this, NotificationReceiver.class)
-//                .setAction(ACTION_PREVIOUS);
-//        PendingIntent prevPending=PendingIntent.getBroadcast(this,0,prevIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        Intent pauseIntent=new Intent(this, NotificationReceiver.class)
-//                .setAction(ACTION_PLAY);
-//        PendingIntent pausePending=PendingIntent.getBroadcast(this,0,pauseIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        Intent nextIntent=new Intent(this, NotificationReceiver.class)
-//                .setAction(ACTION_NEXT);
-//        PendingIntent nextPending=PendingIntent.getBroadcast(this,0,nextIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-
         Intent prevIntent=new Intent(this, NotificationReceiver.class)
                 .setAction(ACTION_PREVIOUS);
         PendingIntent prevPending=PendingIntent.getBroadcast(this,0,prevIntent,
@@ -466,7 +433,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         byte[] picture=null;
-        picture=getAlbumArt(musicFiles.get(position).getPath());
+        picture=getAlbumArt(listSongs.get(position).getPath());
         Bitmap thumb=null;
         if(picture!=null){
             thumb= BitmapFactory.decodeByteArray(picture,0,picture.length);
@@ -477,8 +444,8 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         Notification notification=new NotificationCompat.Builder(this,CHANNEL_ID_2)
                 .setSmallIcon(playPauseBtn)
                 .setLargeIcon(thumb)
-                .setContentTitle(musicFiles.get(position).getTitle())
-                .setContentText(musicFiles.get(position).getArtist())
+                .setContentTitle(listSongs.get(position).getTitle())
+                .setContentText(listSongs.get(position).getArtist())
                 .addAction(R.drawable.ic_skip_previous,"Previous",prevPending)
                 .addAction(playPauseBtn,"Pause",pausePending)
                 .addAction(R.drawable.ic_skip_next,"Next",nextPending)
