@@ -158,6 +158,9 @@ public class NowPlayingFragmentBottom extends Fragment implements ServiceConnect
         }
         songName.setText(SONG_NAME_TO_FRAG);
         artist.setText(ARTIST_TO_FRAG);
+
+        // Update play/pause button state
+        updatePlayPauseButton();
     }
 
     @Override
@@ -206,11 +209,26 @@ public class NowPlayingFragmentBottom extends Fragment implements ServiceConnect
         MusicService.MyBinder binder = (MusicService.MyBinder) service;
         musicService = binder.getService();
         isServiceBound = true;
+
+        // Update play/pause button state when service connects
+        if (musicService != null) {
+            updatePlayPauseButton();
+        }
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         musicService = null;
         isServiceBound = false;
+    }
+
+    private void updatePlayPauseButton() {
+        if (musicService != null && musicService.mediaPlayer != null) {
+            playPauseBtn.setImageResource(
+                    musicService.isPlaying() ?
+                            R.drawable.ic_pause :
+                            R.drawable.ic_play
+            );
+        }
     }
 }
