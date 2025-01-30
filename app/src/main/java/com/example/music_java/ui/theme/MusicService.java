@@ -4,6 +4,7 @@ import static com.example.music_java.ui.theme.PlayerActivity.listSongs;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -23,6 +24,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     Uri uri;
     int position=-1;
     ActionPlaying actionPlaying;
+    public static final String MUSIC_LAST_PLAYED="LAST_PLAYED";
+    public static final String MUSIC_FILE="STORED_MUSIC";
+    public static final String ARTIST_NAME="ARTIST NAME";
+    public static final String SONG_NAME="SONG NAME";
 
     @Override
     public void onCreate() {
@@ -53,26 +58,17 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             switch (actionName){
                 case "playPause" :
                     Toast.makeText(this,"PlayPause",Toast.LENGTH_SHORT).show();
-                    if(actionPlaying!=null){
-                        Log.e("Inside","Action");
-                        actionPlaying.playPauseBtnClicked();
-                    }
+                    playPauseBtnClicked();
                     break;
 
                 case "next" :
                     Toast.makeText(this,"Next",Toast.LENGTH_SHORT).show();
-                    if(actionPlaying!=null){
-                        Log.e("Inside","Action");
-                        actionPlaying.nextBtnClicked();
-                    }
+                    nextBtnCicked();
                     break;
 
                 case "previous" :
                     Toast.makeText(this,"Previous",Toast.LENGTH_SHORT).show();
-                    if(actionPlaying!=null){
-                        Log.e("Inside","Action");
-                        actionPlaying.prevBtnClicked();
-                    }
+                    previousBtnClicked();
                     break;
             }
         }
@@ -99,27 +95,21 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     void start(){
         mediaPlayer.start();
     }
-
     boolean isPlaying(){
         return mediaPlayer.isPlaying();
     }
-
     void stop(){
         mediaPlayer.stop();
     }
-
     void release(){
         mediaPlayer.release();
     }
-
     int getDuration(){
         return mediaPlayer.getDuration();
     }
-
     void seekTo(int position){
         mediaPlayer.seekTo(position);
     }
-
     int getCurrentPosition(){
         return mediaPlayer.getCurrentPosition();
     }
@@ -127,13 +117,16 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     void createMediaPlayer(int positionInner){
         position=positionInner;
         uri=Uri.parse(musicFiles.get(position).getPath());
+        SharedPreferences.Editor editor=getSharedPreferences(MUSIC_LAST_PLAYED,MODE_PRIVATE).edit();
+        editor.putString(MUSIC_FILE,uri.toString());
+        editor.putString(ARTIST_NAME,musicFiles.get(position).getArtist());
+        editor.putString(SONG_NAME,musicFiles.get(position).getTitle());
+        editor.apply();
         mediaPlayer=MediaPlayer.create(getBaseContext(),uri);
     }
-
     void pause(){
         mediaPlayer.pause();
     }
-
     void OnCompleted(){
         mediaPlayer.setOnCompletionListener(this);
     }
@@ -154,4 +147,24 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     void setCallBack(ActionPlaying actionPlaying) {
         this.actionPlaying=actionPlaying;
     }
+
+    void  playPauseBtnClicked(){
+        if(actionPlaying!=null){
+            actionPlaying.playPauseBtnClicked();
+        }
+    }
+
+    void previousBtnClicked(){
+        if(actionPlaying!=null){
+            actionPlaying.prevBtnClicked();
+        }
+    }
+
+    void nextBtnCicked(){
+        if(actionPlaying!=null){
+            actionPlaying.nextBtnClicked();
+        }
+    }
 }
+
+
