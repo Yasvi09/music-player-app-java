@@ -29,98 +29,61 @@ import com.bumptech.glide.Glide;
 import com.example.music_java.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.IOException;
+
 public class NowPlayingFragmentBottom extends Fragment implements ServiceConnection {
 
-    ImageView nextBtn,albumArt;
-    TextView artist,songName;
+    ImageView nextBtn, albumArt;
+    TextView artist, songName;
     FloatingActionButton playPauseBtn;
     View view;
     MusicService musicService;
-    public static final String MUSIC_LAST_PLAYED="LAST_PLAYED";
-    public static final String MUSIC_FILE="STORED_MUSIC";
-    public static final String ARTIST_NAME="ARTIST NAME";
-    public static final String SONG_NAME="SONG NAME";
-    private boolean isBound = false;
-
+    public static final String MUSIC_LAST_PLAYED = "LAST_PLAYED";
+    public static final String MUSIC_FILE = "STORED_MUSIC";
+    public static final String ARTIST_NAME = "ARTIST NAME";
+    public static final String SONG_NAME = "SONG NAME";
+    private boolean isServiceBound = false;
 
     public NowPlayingFragmentBottom() {
         // Required empty public constructor
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        view= inflater.inflate(R.layout.fragment_now_playing_bottom, container, false);
-        artist=view.findViewById(R.id.song_artist_miniPlayer);
-        songName=view.findViewById(R.id.song_name_miniPlayer);
-        albumArt=view.findViewById(R.id.bottom_album_art);
-        nextBtn=view.findViewById(R.id.skip_next_bottom);
-        playPauseBtn=view.findViewById(R.id.play_pause_miniPlayer);
+        view = inflater.inflate(R.layout.fragment_now_playing_bottom, container, false);
+        artist = view.findViewById(R.id.song_artist_miniPlayer);
+        songName = view.findViewById(R.id.song_name_miniPlayer);
+        albumArt = view.findViewById(R.id.bottom_album_art);
+        nextBtn = view.findViewById(R.id.skip_next_bottom);
+        playPauseBtn = view.findViewById(R.id.play_pause_miniPlayer);
 
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "Next", Toast.LENGTH_SHORT).show();
-                if(musicService!=null){
+                if (musicService != null && isServiceBound) {
                     musicService.nextBtnCicked();
-                }
-                if(getActivity()!=null){
-                    SharedPreferences.Editor editor=getActivity().getSharedPreferences(MUSIC_LAST_PLAYED,MODE_PRIVATE).edit();
-                    editor.putString(MUSIC_FILE,musicService.musicFiles.get(musicService.position).getPath());
-                    editor.putString(ARTIST_NAME,musicService.musicFiles.get(musicService.position).getArtist());
-                    editor.putString(SONG_NAME,musicService.musicFiles.get(musicService.position).getTitle());
-                    editor.apply();
-                    SharedPreferences preferences=getActivity().getSharedPreferences(MUSIC_LAST_PLAYED,MODE_PRIVATE);
-                    String path=preferences.getString(MUSIC_FILE,null);
-
-                    String artistName=preferences.getString(ARTIST_NAME,null);
-                    String song_name=preferences.getString(SONG_NAME,null);
-                    if(path!=null){
-                        SHOW_MINI_PLAYER=true;
-                        PATH_TO_FRAG=path;
-                        ARTIST_TO_FRAG=artistName;
-                        SONG_NAME_TO_FRAG=song_name;
+                    if (getActivity() != null) {
+                        updateUI();
                     }
-                    else{
-                        SHOW_MINI_PLAYER=false;
-                        PATH_TO_FRAG=null;
-                        ARTIST_TO_FRAG=null;
-                        SONG_NAME_TO_FRAG=null;
-                    }
-                    if(SHOW_MINI_PLAYER){
-                        if(PATH_TO_FRAG !=null){
-                            byte[] art=getAlbumArt(PATH_TO_FRAG);
-                            if(art!=null){
-                                Glide.with(getContext()).load(art)
-                                        .into(albumArt);
-                            }
-                            else {
-                                Glide.with(getContext()).load(R.drawable.bewedoc)
-                                        .into(albumArt);
-                            }
-                            songName.setText(SONG_NAME_TO_FRAG);
-                            artist.setText(ARTIST_TO_FRAG);
-
-                        }
-                    }
+                } else {
+                    Toast.makeText(getContext(), "Music service not ready", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
         playPauseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "PlayPause", Toast.LENGTH_SHORT).show();
-                if(musicService!=null){
+                if (musicService != null && isServiceBound) {
                     musicService.playPauseBtnClicked();
-
-                    if(musicService.isPlaying()){
+                    if (musicService.isPlaying()) {
                         playPauseBtn.setImageResource(R.drawable.ic_pause);
-                    }
-                    else{
+                    } else {
                         playPauseBtn.setImageResource(R.drawable.ic_play);
                     }
+                } else {
+                    Toast.makeText(getContext(), "Music service not ready", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -128,27 +91,66 @@ public class NowPlayingFragmentBottom extends Fragment implements ServiceConnect
         return view;
     }
 
+    private void updateUI() {
+        if (getActivity() == null) return;
+
+        SharedPreferences.Editor editor = getActivity().getSharedPreferences(MUSIC_LAST_PLAYED, MODE_PRIVATE).edit();
+        if (musicService != null && musicService.musicFiles != null && musicService.position >= 0
+                && musicService.position < musicService.musicFiles.size()) {
+
+            editor.putString(MUSIC_FILE, musicService.musicFiles.get(musicService.position).getPath());
+            editor.putString(ARTIST_NAME, musicService.musicFiles.get(musicService.position).getArtist());
+            editor.putString(SONG_NAME, musicService.musicFiles.get(musicService.position).getTitle());
+            editor.apply();
+
+            SharedPreferences preferences = getActivity().getSharedPreferences(MUSIC_LAST_PLAYED, MODE_PRIVATE);
+            String path = preferences.getString(MUSIC_FILE, null);
+            String artistName = preferences.getString(ARTIST_NAME, null);
+            String song_name = preferences.getString(SONG_NAME, null);
+
+            if (path != null) {
+                SHOW_MINI_PLAYER = true;
+                PATH_TO_FRAG = path;
+                ARTIST_TO_FRAG = artistName;
+                SONG_NAME_TO_FRAG = song_name;
+            } else {
+                SHOW_MINI_PLAYER = false;
+                PATH_TO_FRAG = null;
+                ARTIST_TO_FRAG = null;
+                SONG_NAME_TO_FRAG = null;
+            }
+
+            if (SHOW_MINI_PLAYER && PATH_TO_FRAG != null) {
+                updateBottomPlayerUI();
+            }
+        }
+    }
+
+    private void updateBottomPlayerUI() {
+        if (getContext() == null) return;
+
+        byte[] art = getAlbumArt(PATH_TO_FRAG);
+        if (art != null) {
+            Glide.with(getContext()).load(art)
+                    .into(albumArt);
+        } else {
+            Glide.with(getContext()).load(R.drawable.bewedoc)
+                    .into(albumArt);
+        }
+        songName.setText(SONG_NAME_TO_FRAG);
+        artist.setText(ARTIST_TO_FRAG);
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        if(SHOW_MINI_PLAYER){
-            if(PATH_TO_FRAG !=null){
-                byte[] art=getAlbumArt(PATH_TO_FRAG);
-                if(art!=null){
-                    Glide.with(getContext()).load(art)
-                            .into(albumArt);
+        if (SHOW_MINI_PLAYER) {
+            if (PATH_TO_FRAG != null) {
+                if (getContext() != null) {
+                    Intent intent = new Intent(getContext(), MusicService.class);
+                    getContext().bindService(intent, this, Context.BIND_AUTO_CREATE);
+                    updateBottomPlayerUI();
                 }
-                else {
-                    Glide.with(getContext()).load(R.drawable.bewedoc)
-                            .into(albumArt);
-                }
-                songName.setText(SONG_NAME_TO_FRAG);
-                artist.setText(ARTIST_TO_FRAG);
-                Intent intent=new Intent(getContext(), MusicService.class);
-                if(getContext()!=null){
-                    getContext().bindService(intent,this, Context.BIND_AUTO_CREATE);
-                }
-
             }
         }
     }
@@ -156,27 +158,40 @@ public class NowPlayingFragmentBottom extends Fragment implements ServiceConnect
     @Override
     public void onPause() {
         super.onPause();
-        if(getContext()!=null){
-            getContext().unbindService(this);
+        if (isServiceBound) {
+            if (getContext() != null) {
+                getContext().unbindService(this);
+                isServiceBound = false;
+            }
         }
     }
 
-    private byte[] getAlbumArt(String uri){
-        MediaMetadataRetriever retriever=new MediaMetadataRetriever();
-        retriever.setDataSource(uri);
-        byte[] art=retriever.getEmbeddedPicture();
-        return art;
+    private byte[] getAlbumArt(String uri) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(uri);
+            return retriever.getEmbeddedPicture();
+        } catch (Exception e) {
+            return null;
+        } finally {
+            try {
+                retriever.release();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        MusicService.MyBinder binder=(MusicService.MyBinder) service;
-        musicService= binder.getService();
+        MusicService.MyBinder binder = (MusicService.MyBinder) service;
+        musicService = binder.getService();
+        isServiceBound = true;
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-
-        musicService=null;
+        musicService = null;
+        isServiceBound = false;
     }
 }
