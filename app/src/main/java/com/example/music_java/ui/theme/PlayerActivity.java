@@ -409,7 +409,7 @@ public class PlayerActivity extends AppCompatActivity implements ActionPlaying, 
         MusicService.MyBinder myBinder=(MusicService.MyBinder) service;
         musicService=myBinder.getService();
         musicService.setCallBack(this);
-        Toast.makeText(this,"Connected" + musicService,Toast.LENGTH_SHORT).show();
+        // Toast.makeText(this,"Connected" + musicService,Toast.LENGTH_SHORT).show();
         if (musicService != null) {
             seekBar.setMax(musicService.getDuration() / 1000);
         }
